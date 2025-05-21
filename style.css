@@ -1,0 +1,229 @@
+/* Import Chinese Brush Font */
+@import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Poppins:wght@400;600&display=swap');
+
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f8ff; /* Light Alice Blue */
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    overflow-x: hidden;
+}
+
+.page {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px; /* Mobile-like width */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.page.active {
+    display: flex;
+}
+
+h1 {
+    color: #ff69b4; /* Hot Pink */
+    font-family: 'ZCOOL KuaiLe', cursive;
+    font-size: 2.2em;
+    margin-bottom: 10px;
+}
+
+#welcome-page p {
+    font-size: 1.1em;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 80%;
+}
+
+.nav-button, .action-button {
+    padding: 15px 20px;
+    font-size: 1.1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 25px; /* Rounded buttons */
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.nav-button:hover, .action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+.nav-button:active, .action-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+
+.nav-button.daily { background-color: #87ceeb; } /* Sky Blue */
+.nav-button.easy { background-color: #90ee90; } /* Light Green */
+.nav-button.learn { background-color: #ffa07a; } /* Light Salmon */
+
+.flashcard {
+    background-color: #fff;
+    border-radius: 20px;
+    padding: 30px 20px; /* More padding top/bottom */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    width: 100%;
+    min-height: 400px; /* Ensure flashcard has good height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Pushes content and actions apart */
+    position: relative;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    font-size: 1.8em; /* Larger icon */
+    cursor: pointer;
+    padding: 5px;
+}
+
+.home-button {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+}
+
+.tone-display {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2.5em; /* Larger tone marks */
+    font-weight: bold;
+}
+.tone-1 { color: #28a745; } /* Green for ─ */
+.tone-2 { color: #dc3545; } /* Red for ↗ */
+.tone-3 { color: #800080; } /* Purple for ͝  (or V) */
+.tone-4 { color: #007bff; } /* Blue for ↘ */
+.tone-neutral { color: #6c757d; } /* Grey for neutral */
+
+
+#flashcard-front, #flashcard-back {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center content vertically within its space */
+    flex-grow: 1; /* Allow it to take available space */
+}
+
+#flashcard-back {
+    display: none; /* Initially hidden */
+}
+
+.char-display {
+    font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive; /* Brush font */
+    font-size: 7em; /* Large character */
+    color: #333;
+    margin-bottom: 20px; /* Space below character */
+    line-height: 1.2;
+}
+
+.char-display-back {
+    font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive; /* Brush font */
+    font-size: 3.5em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.pinyin-display {
+    font-size: 1.8em;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+.english-display {
+    font-size: 1.5em;
+    color: #777;
+    margin-bottom: 20px;
+}
+
+.flashcard-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center; /* Center buttons */
+    margin-top: auto; /* Pushes actions to the bottom if content is short */
+    padding-top: 20px; /* Space above buttons */
+}
+
+.flashcard-actions button {
+    flex-grow: 1; /* Make buttons take equal width if needed */
+    max-width: 150px; /* Max width for buttons */
+}
+
+/* Specific colors for action buttons on the back */
+#flashcard-back-actions .action-button.listen { background-color: #17a2b8; } /* Info Blue */
+#flashcard-back-actions .action-button.too-easy-action { background-color: #28a745; } /* Success Green */
+#flashcard-back-actions .action-button.to-learn-action { background-color: #ffc107; } /* Warning Yellow (text needs to be dark) */
+#flashcard-back-actions .action-button.to-learn-action { color: #333; }
+#flashcard-back-actions .action-button.not-too-easy-action { background-color: #fd7e14; } /* Orange */
+#flashcard-back-actions .action-button.learnt-action { background-color: #6f42c1; } /* Indigo */
+#flashcard-back-actions .action-button.next-word-action { background-color: #6c757d; } /* Secondary Grey */
+
+
+.no-words-message {
+    font-size: 1.2em;
+    color: #ff69b4;
+    margin-top: 20px;
+}
+
+/* Spinner */
+.spinner-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+}
+
+.spinner {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #ff69b4; /* Hot Pink */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+.spinner-container p {
+    font-size: 1.2em;
+    color: #ff69b4;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Hide spinner by default, JS will show it */
+.spinner-container.hidden {
+    display: none;
+}

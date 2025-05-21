@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Elsa's Chinese Flashcards</title>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+</head>
+<body>
+    <div id="loading-spinner" class="spinner-container">
+        <div class="spinner"></div>
+        <p>Loading words...</p>
+    </div>
+
+    <div id="welcome-page" class="page active">
+        <h1>Welcome Elsa to your Flashcards!</h1>
+        <p>You have <span id="word-count">0</span> words taught since 2024</p>
+        <div class="button-container">
+            <button id="daily-review-btn" class="nav-button daily">DAILY REVIEW</button>
+            <button id="too-easy-btn" class="nav-button easy">TOO EASY</button>
+            <button id="to-learn-btn" class="nav-button learn">TO LEARN</button>
+        </div>
+    </div>
+
+    <div id="flashcard-page" class="page">
+        <div class="flashcard">
+            <button id="home-btn" class="icon-button home-button">🏠</button>
+            <div id="tone-display" class="tone-display"></div>
+
+            <div id="flashcard-front">
+                <div id="char-display" class="char-display"></div>
+                <div class="flashcard-actions">
+                    <button id="show-answer-btn" class="action-button">SHOW ANSWER</button>
+                    <button id="next-word-btn-front" class="action-button">NEXT WORD</button>
+                </div>
+            </div>
+
+            <div id="flashcard-back">
+                <div id="char-back-display" class="char-display-back"></div>
+                <div id="pinyin-display" class="pinyin-display"></div>
+                <div id="english-display" class="english-display"></div>
+                <div id="flashcard-back-actions" class="flashcard-actions">
+                    {/* Buttons will be dynamically added here */}
+                </div>
+            </div>
+        </div>
+        <p id="no-words-message" class="no-words-message" style="display:none;">No words in this category yet!</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
