@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const SPREADSHEET_ID = '1vhdAs7Bcz0tU9tIxp44U_XmYMegx2msyKGxK6lWDrwg';
     // IMPORTANT: Replace this with the Web app URL you got after deploying the Apps Script
-    const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzghskRRyz4Ns_qxC1IURJctu3tarOpasM_R7cD07lM-Qavi-E1Nd01u4FRSjEkVOWu/exec';
 
     const welcomePage = document.getElementById('welcome-page');
     const flashcardPage = document.getElementById('flashcard-page');
