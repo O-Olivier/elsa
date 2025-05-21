@@ -2,7 +2,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Poppins:wght@400;600&display=swap');
 
-
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
@@ -52,7 +51,7 @@ h1 {
     width: 80%;
 }
 
-.nav-button, .action-button {
+.nav-button {
     padding: 15px 20px;
     font-size: 1.1em;
     font-weight: 600;
@@ -64,15 +63,14 @@ h1 {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.nav-button:hover, .action-button:hover {
+.nav-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 10px rgba(0,0,0,0.15);
 }
-.nav-button:active, .action-button:active {
+.nav-button:active {
     transform: translateY(0px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-
 
 .nav-button.daily { background-color: #87ceeb; } /* Sky Blue */
 .nav-button.easy { background-color: #90ee90; } /* Light Green */
@@ -81,13 +79,13 @@ h1 {
 .flashcard {
     background-color: #fff;
     border-radius: 20px;
-    padding: 30px 20px; /* More padding top/bottom */
+    padding: 30px 20px 20px 20px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.15);
     width: 100%;
     min-height: 400px; /* Ensure flashcard has good height */
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* Pushes content and actions apart */
+    justify-content: space-between;
     position: relative;
 }
 
@@ -107,10 +105,11 @@ h1 {
 
 .tone-display {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 2.5em; /* Larger tone marks */
+    top: 15px;       /* More space from top */
+    right: 15px;      /* More space from right */
+    font-size: 2.2em; /* Adjusted size */
     font-weight: bold;
+    z-index: 10;
 }
 .tone-1 { color: #28a745; } /* Green for ─ */
 .tone-2 { color: #dc3545; } /* Red for ↗ */
@@ -124,24 +123,31 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Center content vertically within its space */
-    flex-grow: 1; /* Allow it to take available space */
+    justify-content: center;
+    flex-grow: 1;
 }
 
 #flashcard-back {
     display: none; /* Initially hidden */
 }
 
-.char-display {
+#char-display {
     font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive; /* Brush font */
-    font-size: 7em; /* Large character */
+    font-size: 6.5em; /* Slightly smaller if space is an issue with padding */
     color: #333;
-    margin-bottom: 20px; /* Space below character */
-    line-height: 1.2;
+    margin-bottom: 20px;
+    line-height: 1.1; /* Adjusted line height */
+    padding-right: 50px; /* Key: Add padding to prevent overlap with tone */
+    padding-left: 10px;  /* Optional: Balance padding if char looks off-center */
+    position: relative;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box; /* Important for padding calculation */
 }
 
+
 .char-display-back {
-    font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive; /* Brush font */
+    font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive;
     font-size: 3.5em;
     color: #333;
     margin-bottom: 10px;
@@ -163,24 +169,59 @@ h1 {
     display: flex;
     gap: 10px;
     width: 100%;
-    justify-content: center; /* Center buttons */
-    margin-top: auto; /* Pushes actions to the bottom if content is short */
-    padding-top: 20px; /* Space above buttons */
+    justify-content: center;
+    margin-top: auto;
+    padding-top: 20px;
 }
 
-.flashcard-actions button {
-    flex-grow: 1; /* Make buttons take equal width if needed */
-    max-width: 150px; /* Max width for buttons */
+.action-button {
+    padding: 12px 18px;
+    font-size: 1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    min-width: 120px; /* Give buttons a minimum width */
+}
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+.action-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Specific colors for action buttons on the back */
-#flashcard-back-actions .action-button.listen { background-color: #17a2b8; } /* Info Blue */
-#flashcard-back-actions .action-button.too-easy-action { background-color: #28a745; } /* Success Green */
-#flashcard-back-actions .action-button.to-learn-action { background-color: #ffc107; } /* Warning Yellow (text needs to be dark) */
-#flashcard-back-actions .action-button.to-learn-action { color: #333; }
-#flashcard-back-actions .action-button.not-too-easy-action { background-color: #fd7e14; } /* Orange */
-#flashcard-back-actions .action-button.learnt-action { background-color: #6f42c1; } /* Indigo */
-#flashcard-back-actions .action-button.next-word-action { background-color: #6c757d; } /* Secondary Grey */
+/* SHOW ANSWER and NEXT WORD (front) buttons */
+#flashcard-front .action-button {
+    background-color: #4a5066; /* Darker slate blue/grey */
+}
+#flashcard-front .action-button:hover {
+    background-color: #393e50; /* Even darker on hover */
+}
+
+
+/* Specific colors for action buttons on the BACK of the card */
+#flashcard-back-actions .action-button.listen { background-color: #0069d9; } /* Darker Info Blue */
+#flashcard-back-actions .action-button.listen:hover { background-color: #0056b3; }
+
+#flashcard-back-actions .action-button.too-easy-action { background-color: #218838; } /* Darker Success Green */
+#flashcard-back-actions .action-button.too-easy-action:hover { background-color: #1e7e34; }
+
+#flashcard-back-actions .action-button.to-learn-action { background-color: #e0a800; color: #212529; } /* Darker Warning Yellow, dark text */
+#flashcard-back-actions .action-button.to-learn-action:hover { background-color: #d39e00; }
+
+#flashcard-back-actions .action-button.not-too-easy-action { background-color: #c85e08; } /* Darker Orange */
+#flashcard-back-actions .action-button.not-too-easy-action:hover { background-color: #b85607; }
+
+#flashcard-back-actions .action-button.learnt-action { background-color: #563d7c; } /* Darker Indigo */
+#flashcard-back-actions .action-button.learnt-action:hover { background-color: #493369; }
+
+#flashcard-back-actions .action-button.next-word-action { background-color: #5a6268; } /* Darker Secondary Grey */
+#flashcard-back-actions .action-button.next-word-action:hover { background-color: #494f54; }
 
 
 .no-words-message {
@@ -191,7 +232,7 @@ h1 {
 
 /* Spinner */
 .spinner-container {
-    display: flex;
+    display: flex; /* Changed to flex to enable it by default, JS will add 'hidden' */
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -202,6 +243,10 @@ h1 {
     height: 100%;
     background-color: rgba(255, 255, 255, 0.9);
     z-index: 9999;
+}
+
+.spinner-container.hidden { /* This class will be added/removed by JS */
+    display: none;
 }
 
 .spinner {
@@ -221,9 +266,4 @@ h1 {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
-}
-
-/* Hide spinner by default, JS will show it */
-.spinner-container.hidden {
-    display: none;
 }

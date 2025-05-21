@@ -1,7 +1,8 @@
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
     const SPREADSHEET_ID = '1vhdAs7Bcz0tU9tIxp44U_XmYMegx2msyKGxK6lWDrwg';
-    // IMPORTANT: Replace this with the Web app URL you got after deploying the Apps Script
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzghskRRyz4Ns_qxC1IURJctu3tarOpasM_R7cD07lM-Qavi-E1Nd01u4FRSjEkVOWu/exec';
+    // IMPORTANT: Use your LATEST successfully tested Apps Script Web App URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4SY1czzSACtv8_x0gv4WOYKOuD1jHZ1Lvv3jGQ--sj9vBRdSgb_qBunfGgpGlcbn5/exec'; // REPLACE IF YOU HAVE A NEWER ONE
 
     const welcomePage = document.getElementById('welcome-page');
     const flashcardPage = document.getElementById('flashcard-page');
@@ -28,50 +29,59 @@ document.addEventListener('DOMContentLoaded', () => {
     let allWords = [];
     let currentFilteredList = [];
     let currentWord = null;
-    let currentListType = ''; // 'daily', 'tooEasy', 'toLearn'
+    let currentListType = '';
+    let speechSynthVoices = [];
 
-    // --- Data Fetching and Processing ---
+    function loadVoices() {
+        if ('speechSynthesis' in window) {
+            speechSynthVoices = speechSynthesis.getVoices();
+            if (speechSynthVoices.length === 0 && speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => {
+                    speechSynthVoices = speechSynthesis.getVoices();
+                    console.log("Voices loaded (onvoiceschanged):", speechSynthVoices.length > 0 ? speechSynthVoices : "Still no voices, check browser/OS settings.");
+                };
+            } else if (speechSynthVoices.length > 0) {
+                console.log("Voices loaded (initial):", speechSynthVoices);
+            } else {
+                console.log("Speech synthesis available, but no voices loaded initially and onvoiceschanged might not be supported or fired yet.");
+            }
+        } else {
+            console.log("Speech synthesis not supported by this browser.");
+        }
+    }
+    loadVoices();
+
     async function fetchSpreadsheetData() {
         loadingSpinner.classList.remove('hidden');
         try {
-            // Using Google Sheets API with gviz to fetch public sheet data as JSON
             const response = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`);
             const text = await response.text();
-            // The response is JSONP, need to extract the JSON part
             const jsonString = text.substring(text.indexOf('(') + 1, text.lastIndexOf(')'));
             const parsedData = JSON.parse(jsonString);
             
-            // console.log("Parsed Data:", parsedData); // For debugging
-
             if (!parsedData.table || !parsedData.table.rows) {
                 console.error("Error: Unexpected data structure from Google Sheets API.", parsedData);
                 alert("Failed to load words. The spreadsheet data might be malformed.");
-                loadingSpinner.classList.add('hidden');
-                return;
+                return; // Keep spinner if error
             }
 
-            // Assuming first row is headers, if not, adjust c.slice(1)
-            // Also, assuming your sheet does not have headers, or you want to include the first row.
-            // If your sheet has headers and you want to skip them, use parsedData.table.rows.slice(1)
             allWords = parsedData.table.rows.map((row, index) => {
-                 // Check if row.c exists and is an array, and has enough elements
                 if (!row || !row.c || !Array.isArray(row.c) || row.c.length < 6) {
                     console.warn(`Skipping malformed row at index ${index}:`, row);
-                    return null; // Skip this row
+                    return null; 
                 }
                 return {
-                    id: index, // Keep original index for potential updates
+                    id: index, 
                     chinese: row.c[0] ? row.c[0].v : '',
                     pinyin: row.c[1] ? row.c[1].v : '',
                     english: row.c[2] ? row.c[2].v : '',
                     tone: row.c[3] ? row.c[3].v : '',
-                    tooEasy: row.c[4] && row.c[4].v === 1, // Column E (index 4)
-                    toLearn: row.c[5] && row.c[5].v === 1  // Column F (index 5)
+                    tooEasy: row.c[4] && row.c[4].v === 1, 
+                    toLearn: row.c[5] && row.c[5].v === 1  
                 };
-            }).filter(word => word !== null && word.chinese); // Filter out nulls and words without Chinese char
+            }).filter(word => word !== null && word.chinese); 
 
             wordCountEl.textContent = allWords.length;
-            // console.log("Fetched words:", allWords);
 
         } catch (error) {
             console.error("Error fetching spreadsheet data:", error);
@@ -81,24 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Tone Styling ---
     function getToneHtml(toneSymbol) {
-        // ͝  is purple, ─ is green, ↘ is blue, ↗ is red
-        // Using pictograms: ─ (1st), ↗ (2nd), ͝ (3rd V-shape), ↘ (4th)
         let pictogram = toneSymbol;
         let cssClass = '';
         switch (toneSymbol) {
-            case '─': pictogram = '▬'; cssClass = 'tone-1'; break; // High flat
-            case '↗': pictogram = '⬆️'; cssClass = 'tone-2'; break; // Rising
-            case '͝': pictogram = '✓'; cssClass = 'tone-3'; break; // Falling-rising (using a check as a V-like shape)
-            case '↘': pictogram = '⬇️'; cssClass = 'tone-4'; break; // Falling
-            default: cssClass = 'tone-neutral'; break; // Neutral or unrecognized
+            case '─': pictogram = '▬'; cssClass = 'tone-1'; break; 
+            case '↗': pictogram = '⬆️'; cssClass = 'tone-2'; break; 
+            case '͝': pictogram = '✓'; cssClass = 'tone-3'; break; 
+            case '↘': pictogram = '⬇️'; cssClass = 'tone-4'; break; 
+            default: cssClass = 'tone-neutral'; pictogram = ''; break; 
         }
         return `<span class="${cssClass}">${pictogram}</span>`;
     }
 
-
-    // --- UI Navigation ---
     function showPage(pageId) {
         welcomePage.classList.remove('active');
         flashcardPage.classList.remove('active');
@@ -107,8 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showWelcomePage() {
         showPage('welcome-page');
-        // Optionally, re-fetch data if you think it might have changed
-        // fetchSpreadsheetData(); // Or update count based on local changes
         wordCountEl.textContent = allWords.length;
     }
 
@@ -118,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showPage('flashcard-page');
     }
 
-    // --- Flashcard Logic ---
     function filterWords() {
         if (currentListType === 'daily') {
             currentFilteredList = allWords.filter(word => !word.tooEasy && !word.toLearn);
@@ -130,20 +132,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayRandomWord() {
-        filterWords(); // Ensure list is up-to-date
+        filterWords(); 
         if (currentFilteredList.length === 0) {
             charDisplay.textContent = '🎉';
             toneDisplay.innerHTML = '';
             noWordsMessage.style.display = 'block';
-            flashcardFront.style.display = 'flex'; // Show front
-            document.getElementById('flashcard-front').querySelector('.flashcard-actions').style.display = 'none'; // Hide front buttons
+            flashcardFront.style.display = 'flex'; 
+            const frontActions = document.getElementById('flashcard-front').querySelector('.flashcard-actions');
+            if (frontActions) frontActions.style.display = 'none'; 
             flashcardBack.style.display = 'none';
             currentWord = null;
             return;
         }
 
         noWordsMessage.style.display = 'none';
-        document.getElementById('flashcard-front').querySelector('.flashcard-actions').style.display = 'flex'; // Show front buttons
+        const frontActions = document.getElementById('flashcard-front').querySelector('.flashcard-actions');
+        if (frontActions) frontActions.style.display = 'flex'; 
 
         const randomIndex = Math.floor(Math.random() * currentFilteredList.length);
         currentWord = currentFilteredList[randomIndex];
@@ -151,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
         charDisplay.textContent = currentWord.chinese;
         toneDisplay.innerHTML = getToneHtml(currentWord.tone);
 
-        // Reset to front of flashcard
         flashcardFront.style.display = 'flex';
         flashcardBack.style.display = 'none';
     }
@@ -169,16 +172,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderBackButtons() {
-        flashcardBackActions.innerHTML = ''; // Clear existing buttons
+        flashcardBackActions.innerHTML = ''; 
 
         const listenBtn = document.createElement('button');
         listenBtn.textContent = 'LISTEN 🔊';
         listenBtn.classList.add('action-button', 'listen');
         listenBtn.addEventListener('click', () => {
             if (currentWord && 'speechSynthesis' in window) {
+                // Ensure voices are loaded if possible, especially on mobile click
+                if (speechSynthVoices.length === 0 && speechSynthesis.getVoices().length > 0) {
+                    speechSynthVoices = speechSynthesis.getVoices();
+                    console.log("Voices re-fetched on click:", speechSynthVoices);
+                }
+
                 const utterance = new SpeechSynthesisUtterance(currentWord.chinese);
-                utterance.lang = 'zh-CN';
+                utterance.lang = 'zh-CN'; 
+
+                if (speechSynthVoices.length > 0) {
+                    let chineseVoice = speechSynthVoices.find(voice => voice.lang === 'zh-CN' || voice.lang.startsWith('zh-'));
+                    if (chineseVoice) {
+                        utterance.voice = chineseVoice;
+                        console.log("Using voice:", chineseVoice.name, chineseVoice.lang);
+                    } else {
+                        console.log("No specific zh-CN voice found from list. Using lang default. Available:", speechSynthVoices.map(v => ({name: v.name, lang: v.lang})));
+                    }
+                } else {
+                    console.warn("speechSynthVoices array is empty or not populated. Speech relies on lang attribute only.");
+                }
+                
+                speechSynthesis.cancel(); 
                 speechSynthesis.speak(utterance);
+
+                utterance.onstart = () => console.log("Speech started for:", currentWord.chinese);
+                utterance.onend = () => console.log("Speech ended for:", currentWord.chinese);
+                utterance.onerror = (event) => console.error("SpeechSynthesisUtterance.onerror", event);
+
             } else {
                 alert('Sorry, your browser does not support Text-to-Speech, or no word is selected.');
             }
@@ -219,55 +247,98 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function updateWordStatus(word, column, value) {
-        if (!word) return;
-        if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
-            alert("Developer: Please configure the APPS_SCRIPT_URL in script.js to enable sheet updates.");
-            // Simulate local update if Apps Script URL is not set
-            if (column === 'E') word.tooEasy = (value === 1);
-            if (column === 'F') word.toLearn = (value === 1);
-            console.log("Local update (Apps Script not configured):", word);
-            displayRandomWord(); // Move to next word after action
+        if (!word) {
+            console.error("updateWordStatus called with no currentWord.");
+            return;
+        }
+        if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' || !APPS_SCRIPT_URL.startsWith('https://script.google.com/')) {
+            alert("Developer: Please configure a valid APPS_SCRIPT_URL in script.js to enable sheet updates.");
+            // Simulate local update for testing without configured URL
+            const wordInAllWords = allWords.find(w => w.id === word.id); // Use ID for safer update
+            if (wordInAllWords) {
+                 if (column === 'E') wordInAllWords.tooEasy = (value === 1);
+                 if (column === 'F') wordInAllWords.toLearn = (value === 1);
+                 console.log("Local update (Apps Script not configured/invalid):", wordInAllWords);
+            } else {
+                console.error("Word not found in allWords for local update:", word);
+            }
+            displayRandomWord(); 
             return;
         }
 
         loadingSpinner.classList.remove('hidden');
+        console.log(`Attempting to update char: "${word.chinese}", column: ${column}, value: ${value} via URL: ${APPS_SCRIPT_URL}`);
+
         try {
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'cors', // Required for cross-origin requests to Apps Script
+                mode: 'cors', 
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json', // Ensuring this header is present
                 },
-                body: JSON.stringify({
-                    char: word.chinese, // Send Chinese char to identify the row
-                    column: column,     // 'E' or 'F'
-                    value: value        // 0 or 1
+                body: JSON.stringify({ // This is correct
+                    char: word.chinese, 
+                    column: column,     
+                    value: value        
                 }),
             });
-            const result = await response.json();
+            
+            const responseText = await response.text(); // Get raw response text for logging
+            console.log("Raw response from Apps Script:", responseText);
+            console.log("Response status:", response.status);
+            console.log("Response ok:", response.ok);
+
+
+            if (!response.ok) {
+                // response.ok is true if status is 200-299
+                console.error(`Error updating sheet: HTTP status ${response.status}. Response: ${responseText}`);
+                alert(`Failed to update sheet (HTTP ${response.status}). Details: ${responseText}. The change is not saved.`);
+                // Don't proceed to next word if update failed, let user retry or acknowledge
+                // However, for now, the logic below will still try to parse if responseText is JSON-like
+            }
+
+            // Try to parse the response as JSON, regardless of response.ok for now, to see what Apps Script sent
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                console.error("Failed to parse response from Apps Script as JSON:", e);
+                console.error("Response was not valid JSON, content:", responseText);
+                if (response.ok) { // If status was ok, but parsing failed, it's an issue.
+                    alert(`Error: Received an invalid response from the server. Please check console. Change might not be saved.`);
+                }
+                // If response.ok was already false, the previous alert about HTTP status is primary.
+                // We still try to go to the next word to not block the user.
+                displayRandomWord();
+                return;
+            }
+
+
             if (result.status === 'success') {
-                console.log("Sheet updated:", result);
+                console.log("Sheet updated successfully via Apps Script:", result);
                 // Update local data to match
-                const wordInAllWords = allWords.find(w => w.chinese === word.chinese);
+                const wordInAllWords = allWords.find(w => w.id === word.id); // Use ID
                 if (wordInAllWords) {
                     if (column === 'E') wordInAllWords.tooEasy = (value === 1);
                     if (column === 'F') wordInAllWords.toLearn = (value === 1);
+                } else {
+                    console.warn("Updated word not found in local 'allWords' cache by ID after successful sheet update. Word:", word);
                 }
             } else {
-                console.error("Error updating sheet:", result.message);
+                // This case handles if Apps Script returns a JSON with { status: "error", message: "..." }
+                console.error("Apps Script reported an error:", result.message);
                 alert(`Failed to update sheet: ${result.message}. The change is not saved.`);
             }
         } catch (error) {
-            console.error("Error calling Apps Script:", error);
-            alert(`An error occurred while trying to save your change: ${error.message}.`);
+            // This catch handles network errors for fetch itself (e.g., "Failed to fetch")
+            console.error("Network error or other exception calling Apps Script:", error);
+            alert(`An error occurred while trying to save your change: ${error.message}. This could be a network issue, CORS, or a problem with the server URL. Please ensure your Apps Script is deployed correctly.`);
         } finally {
             loadingSpinner.classList.add('hidden');
-            displayRandomWord(); // Move to next word after action
+            displayRandomWord(); 
         }
     }
 
-
-    // --- Event Listeners ---
     dailyReviewBtn.addEventListener('click', () => {
         currentListType = 'daily';
         showFlashcardPage();
@@ -289,11 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
     homeBtn.addEventListener('click', showWelcomePage);
     nextWordBtnFront.addEventListener('click', displayRandomWord);
 
-
-    // --- Initial Load ---
     async function initializeApp() {
+        loadingSpinner.classList.remove('hidden');
         await fetchSpreadsheetData();
-        showWelcomePage(); // Show welcome page after data is loaded
+        showWelcomePage(); 
     }
 
     initializeApp();
