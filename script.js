@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- Constants ---
     const SPREADSHEET_ID = '1vhdAs7Bcz0tU9tIxp44U_XmYMegx2msyKGxK6lWDrwg';
-    // IMPORTANT: Replace this with the Web app URL you got after deploying the Apps Script
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4SY1czzSACtv8_x0gv4WOYKOuD1jHZ1Lvv3jGQ--sj9vBRdSgb_qBunfGgpGlcbn5/exec'; // Your previously provided URL
 
     // --- DOM Elements ---
@@ -31,8 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let allWords = [];
     let currentFilteredList = [];
     let currentWord = null;
-    let currentListType = ''; // 'daily', 'tooEasy', 'toLearn'
+    let currentListType = '';
     let speechSynthVoices = [];
+    let audioPrimed = false; // For audio unlock hack
 
     // --- Utility Functions ---
     function showLoading(show) {
@@ -64,13 +64,36 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Page not found:", pageId);
         }
     }
+    
+    // --- Audio Unlock Attempt ---
+    function primeAudio() {
+        if (!audioPrimed && 'speechSynthesis' in window) {
+            try {
+                console.log("Attempting to prime audio context for speech synthesis...");
+                const dummyUtterance = new SpeechSynthesisUtterance(' '); // Speak a space character
+                dummyUtterance.volume = 0; // Make it silent
+                dummyUtterance.lang = 'zh-CN'; // Set language to potentially help load voices
+                speechSynthesis.speak(dummyUtterance);
+                audioPrimed = true;
+                console.log("Speech synthesis engine primed.");
+                // Remove listeners after first successful priming
+                document.body.removeEventListener('click', primeAudio, true);
+                document.body.removeEventListener('touchend', primeAudio, true);
+            } catch (e) {
+                console.error("Error priming audio:", e);
+                // If priming fails, still set audioPrimed to true to not retry indefinitely
+                audioPrimed = true; 
+            }
+        }
+    }
+
 
     // --- Core Logic ---
     async function fetchSpreadsheetData() {
         console.log("Attempting to fetch spreadsheet data...");
         showLoading(true);
         try {
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&t=${new Date().getTime()}`; // Added cache buster
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&t=${new Date().getTime()}`;
             console.log("Fetching from URL:", gvizUrl);
             const response = await fetch(gvizUrl);
 
@@ -80,16 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const text = await response.text();
-            console.log("gviz response text:", text.substring(0, 100) + "..."); // Log snippet of response
-
             const jsonString = text.substring(text.indexOf('(') + 1, text.lastIndexOf(')'));
             const parsedData = JSON.parse(jsonString);
-            console.log("Parsed gviz data:", parsedData);
 
             if (!parsedData.table || !parsedData.table.rows) {
                 console.error("Error: Unexpected data structure from Google Sheets API.", parsedData);
-                alert("Failed to load words. The spreadsheet data might be malformed.");
-                allWords = []; // Ensure allWords is empty if fetch fails structurally
+                allWords = [];
             } else {
                 allWords = parsedData.table.rows.map((row, index) => {
                     if (!row || !row.c || !Array.isArray(row.c) || row.c.length < 6) {
@@ -115,8 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Error in fetchSpreadsheetData:", error);
-            alert("Could not load words. Please check the console for more details and verify your internet connection or the spreadsheet link.");
-            allWords = []; // Ensure allWords is empty on error
+            alert("Could not load words. Please check the console for more details.");
+            allWords = [];
             if (wordCountEl) wordCountEl.textContent = 'Error';
         } finally {
             showLoading(false);
@@ -124,8 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function filterWords() {
-        if (!allWords) { // Should not happen if initialized properly
-            console.error("allWords is not initialized!");
+        if (!allWords) { 
             currentFilteredList = [];
             return;
         }
@@ -136,13 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (currentListType === 'toLearn') {
             currentFilteredList = allWords.filter(word => word.toLearn);
         } else {
-            currentFilteredList = []; // Default to empty if type is unknown
+            currentFilteredList = [];
         }
     }
 
     function displayRandomWord() {
         filterWords();
-        if (!currentWord && currentFilteredList.length === 0) { // Only show no words if it wasn't already on a card
+        if (currentFilteredList.length === 0) {
              if (charDisplay) charDisplay.textContent = '🎉';
              if (toneDisplay) toneDisplay.innerHTML = '';
              if (noWordsMessage) noWordsMessage.style.display = 'block';
@@ -151,16 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
              if (frontActions) frontActions.style.display = 'none';
              if (flashcardBack) flashcardBack.style.display = 'none';
              currentWord = null;
-             return;
-        } else if (currentFilteredList.length === 0) { // If list becomes empty while on a card
-            // Stay on current card or decide behavior
-            // For now, just indicate no more words in this list if they hit next
-             if (charDisplay) charDisplay.textContent = '🎉';
-             if (toneDisplay) toneDisplay.innerHTML = '';
-             if (noWordsMessage) noWordsMessage.style.display = 'block';
-             const frontActions = document.getElementById('flashcard-front')?.querySelector('.flashcard-actions');
-             if (frontActions) frontActions.style.display = 'none';
-             currentWord = null; // No more words to pick
              return;
         }
 
@@ -188,13 +196,30 @@ document.addEventListener('DOMContentLoaded', () => {
         listenBtn.classList.add('action-button', 'listen');
         listenBtn.addEventListener('click', () => {
             if (currentWord && 'speechSynthesis' in window) {
+                // Attempt to prime again if not already, or if speaking directly
+                // Though ideally primeAudio was called on first body interaction
+                if (!audioPrimed) primeAudio(); 
+
+                console.log("Listen button clicked. Current word:", currentWord.chinese);
                 const utterance = new SpeechSynthesisUtterance(currentWord.chinese);
                 utterance.lang = 'zh-CN';
                 if (speechSynthVoices.length > 0) {
                     let chineseVoice = speechSynthVoices.find(voice => voice.lang === 'zh-CN' || voice.lang.startsWith('zh-'));
-                    if (chineseVoice) utterance.voice = chineseVoice;
+                    if (chineseVoice) {
+                        utterance.voice = chineseVoice;
+                        console.log("Using voice:", chineseVoice.name);
+                    } else {
+                        console.log("No specific zh-CN voice found, using lang default.");
+                    }
+                } else {
+                     console.warn("speechSynthVoices array is empty. Speech will rely on lang attribute only.");
                 }
-                speechSynthesis.cancel();
+                
+                utterance.onstart = () => console.log("Speech started for:", currentWord.chinese);
+                utterance.onend = () => console.log("Speech ended for:", currentWord.chinese);
+                utterance.onerror = (event) => console.error("SpeechSynthesisUtterance.onerror", event);
+
+                speechSynthesis.cancel(); // Cancel any previous speech
                 speechSynthesis.speak(utterance);
             } else {
                 alert('Sorry, Text-to-Speech is not supported or no word selected.');
@@ -240,15 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("updateWordStatus called with no word.");
             return;
         }
-        console.log(`Attempting to update char: "${wordToUpdate.chinese}", column: ${column}, value: ${value} via URL: ${APPS_SCRIPT_URL}`);
+        console.log(`Attempting to update char: "${wordToUpdate.chinese}", column: ${column}, value: ${value}`);
 
         if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE' || !APPS_SCRIPT_URL.startsWith('https://script.google.com/')) {
-            alert("Developer: Please configure a valid APPS_SCRIPT_URL in script.js to enable sheet updates.");
-            const wordInAll = allWords.find(w => w.id === wordToUpdate.id); // Use ID for safer update
-            if (wordInAll) {
-                if (column === 'E') wordInAll.tooEasy = (value === 1);
-                if (column === 'F') wordInAll.toLearn = (value === 1);
-            }
+            alert("Developer: Please configure a valid APPS_SCRIPT_URL in script.js.");
+            // ... local update simulation ...
             displayRandomWord();
             return;
         }
@@ -268,13 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`Error updating sheet (HTTP ${response.status}):`, errorText);
-                throw new Error(`Sheet update failed with status ${response.status}. Response: ${errorText}`);
+                throw new Error(`Sheet update failed with status ${response.status}.`);
             }
 
             const result = await response.json();
             if (result.status === 'success') {
                 console.log("Sheet updated successfully via Apps Script:", result);
-                const wordInAll = allWords.find(w => w.id === wordToUpdate.id); // Use ID
+                const wordInAll = allWords.find(w => w.id === wordToUpdate.id);
                 if (wordInAll) {
                     if (column === 'E') wordInAll.tooEasy = (value === 1);
                     if (column === 'F') wordInAll.toLearn = (value === 1);
@@ -285,17 +306,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("Network error or other exception calling Apps Script:", error);
-            alert(`Failed to save changes: ${error.message}. Please check console and ensure Apps Script is correctly deployed.`);
-            // Do not automatically go to next word if update failed
-            showLoading(false); // Ensure spinner is hidden on error
-            return; // Stop here
-        } finally {
-            // Only hide spinner if not already hidden by an error return
-            if (!loadingSpinner.classList.contains('hidden')) {
-                 showLoading(false);
-            }
-        }
-        displayRandomWord(); // Go to next word ONLY if successful or explicitly handled
+            alert(`Failed to save changes: ${error.message}.`);
+            showLoading(false);
+            return; 
+        } 
+        // Only hide spinner and go to next word if successful
+        showLoading(false);
+        displayRandomWord(); 
     }
 
 
@@ -311,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tooEasyBtn) tooEasyBtn.addEventListener('click', () => handleNavButtonClick('tooEasy'));
         if (toLearnBtn) toLearnBtn.addEventListener('click', () => handleNavButtonClick('toLearn'));
         
-        if (homeBtn) homeBtn.addEventListener('click', () => showPage('welcome-page')); // Re-show welcome, don't re-fetch unless necessary
+        if (homeBtn) homeBtn.addEventListener('click', () => showPage('welcome-page'));
         
         if (showAnswerBtn) {
             showAnswerBtn.addEventListener('click', () => {
@@ -325,6 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         if (nextWordBtnFront) nextWordBtnFront.addEventListener('click', displayRandomWord);
+
+        // Add event listeners for the audio priming on first interaction
+        document.body.addEventListener('click', primeAudio, { capture: true, once: true });
+        document.body.addEventListener('touchend', primeAudio, { capture: true, once: true });
+        console.log("Audio priming event listeners attached to body.");
     }
 
     function loadSpeechVoices() {
@@ -344,20 +366,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialization ---
     async function initializeApp() {
         console.log("Initializing app...");
-        showLoading(true); // Show spinner at the very start
-        setupEventListeners(); // Set up listeners early
-        loadSpeechVoices();    // Attempt to load voices
-        await fetchSpreadsheetData(); // Load data from sheet
-        showPage('welcome-page');     // Show the welcome page
-        // fetchSpreadsheetData will hide spinner in its finally block
+        showLoading(true); 
+        setupEventListeners(); 
+        loadSpeechVoices();    
+        await fetchSpreadsheetData(); 
+        showPage('welcome-page');     
         console.log("App initialized.");
+        // Spinner is hidden in fetchSpreadsheetData's finally block
     }
 
-    // Start the application
     initializeApp().catch(error => {
         console.error("Critical error during app initialization:", error);
         alert("A critical error occurred while starting the app. Please check the console.");
-        showLoading(false); // Ensure spinner is hidden if init fails catastrophically
+        showLoading(false); 
     });
 
 });

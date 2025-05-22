@@ -82,7 +82,7 @@ h1 {
     padding: 30px 20px 20px 20px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.15);
     width: 100%;
-    min-height: 400px; /* Ensure flashcard has good height */
+    min-height: 400px; 
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -92,30 +92,31 @@ h1 {
 .icon-button {
     background: none;
     border: none;
-    font-size: 1.8em; /* Larger icon */
     cursor: pointer;
     padding: 5px;
 }
 
 .home-button {
     position: absolute;
-    bottom: 15px;
-    right: 15px;
+    top: 15px;    /* Moved to top */
+    left: 15px;   /* Moved to left */
+    font-size: 1.8em; 
+    z-index: 20; /* Ensure it's above tone display if positions overlap */
 }
 
 .tone-display {
     position: absolute;
-    top: 15px;       /* More space from top */
-    right: 15px;      /* More space from right */
-    font-size: 2.2em; /* Adjusted size */
+    top: 10px;        /* Higher */
+    right: 15px;
+    font-size: 1.8em;  /* Smaller */
     font-weight: bold;
     z-index: 10;
 }
-.tone-1 { color: #28a745; } /* Green for ─ */
-.tone-2 { color: #dc3545; } /* Red for ↗ */
-.tone-3 { color: #800080; } /* Purple for ͝  (or V) */
-.tone-4 { color: #007bff; } /* Blue for ↘ */
-.tone-neutral { color: #6c757d; } /* Grey for neutral */
+.tone-1 { color: #28a745; } 
+.tone-2 { color: #dc3545; } 
+.tone-3 { color: #800080; } 
+.tone-4 { color: #007bff; } 
+.tone-neutral { color: #6c757d; } 
 
 
 #flashcard-front, #flashcard-back {
@@ -128,21 +129,21 @@ h1 {
 }
 
 #flashcard-back {
-    display: none; /* Initially hidden */
+    display: none; 
 }
 
 #char-display {
-    font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive; /* Brush font */
-    font-size: 6.5em; /* Slightly smaller if space is an issue with padding */
+    font-family: 'Ma Shan Zheng', 'ZCOOL KuaiLe', cursive; 
+    font-size: 6em; /* Adjusted due to smaller tone, can tweak */
     color: #333;
     margin-bottom: 20px;
-    line-height: 1.1; /* Adjusted line height */
-    padding-right: 50px; /* Key: Add padding to prevent overlap with tone */
-    padding-left: 10px;  /* Optional: Balance padding if char looks off-center */
+    line-height: 1.1; 
+    padding-right: 35px; /* Adjusted for smaller tone */
+    padding-left: 10px;  
     position: relative;
     text-align: center;
     width: 100%;
-    box-sizing: border-box; /* Important for padding calculation */
+    box-sizing: border-box; 
 }
 
 
@@ -167,28 +168,38 @@ h1 {
 
 .flashcard-actions {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 8px; /* Reduced gap for tighter packing */
     width: 100%;
-    justify-content: center;
+    justify-content: center; 
     margin-top: auto;
-    padding-top: 20px;
+    padding-top: 15px; /* Reduced padding */
 }
 
 .action-button {
-    padding: 12px 18px;
-    font-size: 1em;
+    padding: 10px 12px; /* Adjusted padding */
+    font-size: 0.85em;  /* Adjusted font size */
     font-weight: 600;
     border: none;
-    border-radius: 20px;
+    border-radius: 18px; 
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
     color: white;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    min-width: 120px; /* Give buttons a minimum width */
+    box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+    
+    flex-grow: 1;  
+    flex-basis: 100px; /* Adjusted base width, aim for 2-3 buttons per row */
+    max-width: 48%; /* Ensure two buttons can fit with gap */
+    text-align: center; 
+    min-height: 40px; /* Give some min height */
+    display: flex; /* For aligning text vertically if needed */
+    align-items: center;
+    justify-content: center;
 }
+
 .action-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+    box-shadow: 0 5px 8px rgba(0,0,0,0.15); /* Enhanced hover shadow */
 }
 .action-button:active {
     transform: translateY(0px);
@@ -197,30 +208,32 @@ h1 {
 
 /* SHOW ANSWER and NEXT WORD (front) buttons */
 #flashcard-front .action-button {
-    background-color: #4a5066; /* Darker slate blue/grey */
+    background-color: #4a5066; 
+    flex-basis: 120px; /* Can be a bit wider if only two */
+    max-width: 45%; /* Ensure they fit side by side */
 }
 #flashcard-front .action-button:hover {
-    background-color: #393e50; /* Even darker on hover */
+    background-color: #393e50; 
 }
 
 
 /* Specific colors for action buttons on the BACK of the card */
-#flashcard-back-actions .action-button.listen { background-color: #0069d9; } /* Darker Info Blue */
+#flashcard-back-actions .action-button.listen { background-color: #0069d9; } 
 #flashcard-back-actions .action-button.listen:hover { background-color: #0056b3; }
 
-#flashcard-back-actions .action-button.too-easy-action { background-color: #218838; } /* Darker Success Green */
+#flashcard-back-actions .action-button.too-easy-action { background-color: #218838; } 
 #flashcard-back-actions .action-button.too-easy-action:hover { background-color: #1e7e34; }
 
-#flashcard-back-actions .action-button.to-learn-action { background-color: #e0a800; color: #212529; } /* Darker Warning Yellow, dark text */
+#flashcard-back-actions .action-button.to-learn-action { background-color: #e0a800; color: #212529; } 
 #flashcard-back-actions .action-button.to-learn-action:hover { background-color: #d39e00; }
 
-#flashcard-back-actions .action-button.not-too-easy-action { background-color: #c85e08; } /* Darker Orange */
+#flashcard-back-actions .action-button.not-too-easy-action { background-color: #c85e08; } 
 #flashcard-back-actions .action-button.not-too-easy-action:hover { background-color: #b85607; }
 
-#flashcard-back-actions .action-button.learnt-action { background-color: #563d7c; } /* Darker Indigo */
+#flashcard-back-actions .action-button.learnt-action { background-color: #563d7c; } 
 #flashcard-back-actions .action-button.learnt-action:hover { background-color: #493369; }
 
-#flashcard-back-actions .action-button.next-word-action { background-color: #5a6268; } /* Darker Secondary Grey */
+#flashcard-back-actions .action-button.next-word-action { background-color: #5a6268; } 
 #flashcard-back-actions .action-button.next-word-action:hover { background-color: #494f54; }
 
 
@@ -230,9 +243,8 @@ h1 {
     margin-top: 20px;
 }
 
-/* Spinner */
 .spinner-container {
-    display: flex; /* Changed to flex to enable it by default, JS will add 'hidden' */
+    display: flex; 
     flex-direction: column;
     justify-content: center;
     align-items: center;
@@ -245,13 +257,13 @@ h1 {
     z-index: 9999;
 }
 
-.spinner-container.hidden { /* This class will be added/removed by JS */
+.spinner-container.hidden {
     display: none;
 }
 
 .spinner {
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #ff69b4; /* Hot Pink */
+    border: 8px solid #f3f3f3; 
+    border-top: 8px solid #ff69b4; 
     border-radius: 50%;
     width: 60px;
     height: 60px;
